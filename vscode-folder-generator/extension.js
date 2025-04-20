@@ -10,8 +10,41 @@ const path = require("path");
 /**
  * @param {vscode.ExtensionContext} context
  */
+console.log("✅ Extension activated and running!");
 function activate(context) {
 	console.log("Folder Structure Generator is now active!");
+
+	let generateCommand = vscode.commands.registerCommand("extension.generateFolderStructure", async function () {
+		const document = await vscode.workspace.openTextDocument({
+		  content: `# Enter your folder structure here
+# You can use either of these formats:
+
+# Format 1 (tree-like):
+# src
+# ├── app
+# │   ├── layout.tsx
+# │   └── page.tsx
+# └── components
+#     └── ExpenseForm.tsx
+
+# Format 2 (indented):
+# src/
+#     app/
+#         layout.tsx
+#         page.tsx
+#     components/
+#         ExpenseForm.tsx
+`,
+		  language: "plaintext",
+		});
+	
+		await vscode.window.showTextDocument(document);
+		vscode.window.showInformationMessage(
+		  'Enter your folder structure, then run the "Process Folder Structure" command'
+		);
+	  });
+	
+	  context.subscriptions.push(generateCommand);
   }
   
 

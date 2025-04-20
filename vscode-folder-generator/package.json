@@ -3,16 +3,23 @@
   "displayName": "Folder Structure Generator",
   "description": "Quickly create complex folder structures in your VS Code projects.",
   "version": "0.0.1",
+  "main": "./extension.js",
   "engines": {
-    "vscode": "^1.99.0"
+    "vscode": "^1.94.0"
   },
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
-  "main": "./extension.js",
+  "activationEvents": [  
+    "onCommand:extension.generateFolderStructure"
+],
   "contributes": {
-    "commands": []
+    "commands": [
+      {
+        "command": "extension.generateFolderStructure",
+        "title": "Generate Folder Structure"
+      }
+    ]
   },
   "scripts": {
     "lint": "eslint .",
