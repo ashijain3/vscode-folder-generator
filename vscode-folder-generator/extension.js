@@ -78,7 +78,27 @@ function activate(context) {
 	  context.subscriptions.push(generateCommand,processCommand);
   }
   
-
+  function createFolderStructure(rootPath, input) {
+	const lines = input.split("\n").filter((line) => !line.trim().startsWith("#") && line.trim() !== "");
+	const isTreeFormat = lines.some((line) => line.includes("├──") || line.includes("└──") || line.includes("│"));
+  
+	let folderCount = 0;
+	let fileCount = 0;
+  
+	try {
+	  if (isTreeFormat) {
+		({ folderCount, fileCount } = processTreeStructure(rootPath, lines));
+	  } else {
+		({ folderCount, fileCount } = processIndentedStructure(rootPath, lines));
+	  }
+	} catch (error) {
+	  console.error("Error in createFolderStructure:", error);
+	  throw error;
+	}
+  
+	return { folderCount, fileCount };
+  }
+  
 // This method is called when your extension is deactivated
 function deactivate() {}
 
