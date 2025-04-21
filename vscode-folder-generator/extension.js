@@ -43,8 +43,39 @@ function activate(context) {
 		  'Enter your folder structure, then run the "Process Folder Structure" command'
 		);
 	  });
+
+	  let processCommand = vscode.commands.registerCommand("extension.processFolderStructure", async function () {
+		const editor = vscode.window.activeTextEditor;
+		if (!editor) {
+		  vscode.window.showErrorMessage("No active editor");
+		  return;
+		}
+	  
+		let workspaceFolder = vscode.workspace.workspaceFolders ? vscode.workspace.workspaceFolders[0].uri : undefined;
+	  
+		const folderUri = await vscode.window.showOpenDialog({
+		  canSelectFiles: false,
+		  canSelectFolders: true,
+		  canSelectMany: false,
+		  openLabel: "Select Folder",
+		  defaultUri: workspaceFolder,
+		});
+	  
+		if (!folderUri || folderUri.length === 0) {
+		  vscode.window.showInformationMessage("Folder selection cancelled");
+		  return;
+		}
+	  
+		const rootPath = folderUri[0].fsPath;
+		const input = editor.document.getText();
+	  
+		vscode.window.showInformationMessage("Folder structure ready to be processed.");
+		console.log("Structure input:", input);
+		console.log("Target path:", rootPath);
+	  });
+	  
 	
-	  context.subscriptions.push(generateCommand);
+	  context.subscriptions.push(generateCommand,processCommand);
   }
   
 
