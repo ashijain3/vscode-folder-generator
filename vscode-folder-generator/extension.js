@@ -69,9 +69,18 @@ function activate(context) {
 		const rootPath = folderUri[0].fsPath;
 		const input = editor.document.getText();
 	  
-		vscode.window.showInformationMessage("Folder structure ready to be processed.");
-		console.log("Structure input:", input);
-		console.log("Target path:", rootPath);
+		const { folderCount, fileCount } = createFolderStructure(rootPath, input);
+
+		const message = `✅ Folder structure created!\n${folderCount} folders and ${fileCount} files were created.`;
+		const action = await vscode.window.showInformationMessage(message, "Open Folder", "Generate Report");
+
+		if (action === "Open Folder") {
+		const uri = vscode.Uri.file(rootPath);
+		await vscode.commands.executeCommand("vscode.openFolder", uri);
+		} else if (action === "Generate Report") {
+		await generateReport(rootPath, input);
+		}
+
 	  });
 	  
 	
@@ -106,7 +115,7 @@ function processTreeStructure(rootPath, lines) {
   
 	lines.forEach((line, index) => {
 	  try {
-		const depth = line.search(/[^\s│]/); // spaces before the name
+		const depth = (line.match(/│| /g) || []).length; // spaces before the name
 		const name = line.replace(/^[│ ]*[└├]──\s*/, "").trim(); // remove tree symbols
   
 		// Go back up the folder stack if needed
@@ -169,7 +178,15 @@ function processTreeStructure(rootPath, lines) {
 	return { folderCount, fileCount };
   }
   
-
+async function generateReport(rootPath, input) {
+const reportContent = `# Folder Structure Report\n\n\`\`\`\n${input}\n\`\`\``;
+const reportPath = path.join(rootPath, "folder_structure_report.md");
+fs.writeFileSync(reportPath, reportContent);
+const uri = vscode.Uri.file(reportPath);
+await vscode.workspace.openTextDocument(uri);
+await vscode.window.showTextDocument(uri);
+}
+  
 // This method is called when your extension is deactivated
 function deactivate() {}
 
