@@ -78,27 +78,65 @@ function activate(context) {
 	  context.subscriptions.push(generateCommand,processCommand);
   }
   
-  function createFolderStructure(rootPath, input) {
-	const lines = input.split("\n").filter((line) => !line.trim().startsWith("#") && line.trim() !== "");
-	const isTreeFormat = lines.some((line) => line.includes("├──") || line.includes("└──") || line.includes("│"));
-  
+function createFolderStructure(rootPath, input) {
+const lines = input.split("\n").filter((line) => !line.trim().startsWith("#") && line.trim() !== "");
+const isTreeFormat = lines.some((line) => line.includes("├──") || line.includes("└──") || line.includes("│"));
+
+let folderCount = 0;
+let fileCount = 0;
+
+try {
+	if (isTreeFormat) {
+	({ folderCount, fileCount } = processTreeStructure(rootPath, lines));
+	} else {
+	({ folderCount, fileCount } = processIndentedStructure(rootPath, lines));
+	}
+} catch (error) {
+	console.error("Error in createFolderStructure:", error);
+	throw error;
+}
+
+return { folderCount, fileCount };
+}
+
+function processTreeStructure(rootPath, lines) {
 	let folderCount = 0;
 	let fileCount = 0;
+	const stack = [{ path: rootPath, depth: -1 }];
   
-	try {
-	  if (isTreeFormat) {
-		({ folderCount, fileCount } = processTreeStructure(rootPath, lines));
-	  } else {
-		({ folderCount, fileCount } = processIndentedStructure(rootPath, lines));
+	lines.forEach((line, index) => {
+	  try {
+		const depth = line.search(/[^\s│]/); // spaces before the name
+		const name = line.replace(/^[│ ]*[└├]──\s*/, "").trim(); // remove tree symbols
+  
+		// Go back up the folder stack if needed
+		while (stack.length > 1 && stack[stack.length - 1].depth >= depth) {
+		  stack.pop();
+		}
+  
+		const parentPath = stack[stack.length - 1].path;
+		const fullPath = path.join(parentPath, name);
+  
+		if (name.includes(".")) {
+		  fs.writeFileSync(fullPath, ""); // create empty file
+		  fileCount++;
+		} else {
+		  fs.mkdirSync(fullPath, { recursive: true });
+		  folderCount++;
+		  stack.push({ path: fullPath, depth });
+		}
+	  } catch (error) {
+		console.error(`Error processing line ${index + 1}: ${line}`, error);
+		throw error;
 	  }
-	} catch (error) {
-	  console.error("Error in createFolderStructure:", error);
-	  throw error;
-	}
+	});
   
 	return { folderCount, fileCount };
   }
+
+
   
+
 // This method is called when your extension is deactivated
 function deactivate() {}
 
