@@ -134,7 +134,40 @@ function processTreeStructure(rootPath, lines) {
 	return { folderCount, fileCount };
   }
 
-
+  function processIndentedStructure(rootPath, lines) {
+	const stack = [{ path: rootPath, level: -1 }];
+	let folderCount = 0;
+	let fileCount = 0;
+  
+	lines.forEach((line, index) => {
+	  try {
+		const trimmedLine = line.trimStart();
+		const level = line.length - trimmedLine.length;
+		const name = trimmedLine.replace(/\/$/g, "");
+  
+		while (stack.length > 1 && stack[stack.length - 1].level >= level) {
+		  stack.pop();
+		}
+  
+		const parentPath = stack[stack.length - 1].path;
+		const currentPath = path.join(parentPath, name);
+  
+		if (name.includes(".")) {
+		  fs.writeFileSync(currentPath, "");
+		  fileCount++;
+		} else {
+		  fs.mkdirSync(currentPath, { recursive: true });
+		  folderCount++;
+		  stack.push({ path: currentPath, level });
+		}
+	  } catch (error) {
+		console.error(`Error processing line ${index + 1}: ${line}`, error);
+		throw error;
+	  }
+	});
+  
+	return { folderCount, fileCount };
+  }
   
 
 // This method is called when your extension is deactivated
